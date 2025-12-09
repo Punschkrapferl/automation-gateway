@@ -8,6 +8,6 @@ class AutomationGatewayApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// Verifies that the Spring context starts successfully.
 	}
-
 }

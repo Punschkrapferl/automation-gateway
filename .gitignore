@@ -1,33 +1,91 @@
-HELP.md
+############################
+# Maven / Build
+############################
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+############################
+# Gradle (in case someone adds it)
+############################
+.gradle/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+!gradle/wrapper/gradle-wrapper.jar
 
-### VS Code ###
+############################
+# IntelliJ IDEA
+############################
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+############################
+# Eclipse / STS
+############################
+.project
+.classpath
+.settings/
+.springBeans
+.sts4-cache/
+
+############################
+# VS Code
+############################
 .vscode/
+
+############################
+# OS / Misc
+############################
+.DS_Store
+Thumbs.db
+.desktop
+*.log
+
+############################
+# Spring Boot / Application
+############################
+# Local configuration files
+application-local.yml
+application-local.properties
+application-*.local.yml
+application-*.local.properties
+
+# Environment / credentials
+.env
+.env.*
+*.keystore
+*.jks
+*.p12
+
+############################
+# Docker
+############################
+*.pid
+docker-data/
+docker-compose.override.yml
+
+############################
+# Test / Reports
+############################
+surefire-reports/
+failsafe-reports/
+test-output/
+
+############################
+# Lombok
+############################
+lombok.config
+
+############################
+# IDE indexing / caches
+############################
+.cache/
+*.swp
+*.swo

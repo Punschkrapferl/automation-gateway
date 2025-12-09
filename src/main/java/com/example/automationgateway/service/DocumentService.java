@@ -9,10 +9,9 @@ import com.example.automationgateway.model.DocumentStatus;
 import com.example.automationgateway.repository.DocumentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -20,8 +19,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Application service responsible for:
+ * <ul>
+ *   <li>Persisting incoming documents</li>
+ *   <li>Calling the external RAG backend for analysis</li>
+ *   <li>Storing the AI analysis result as JSON</li>
+ *   <li>Mapping entities to API-facing DTOs</li>
+ * </ul>
+ * <p>
+ * Exposed via {@link com.example.automationgateway.controller.DocumentController}.
+ * </p>
+ */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class DocumentService {
 
@@ -30,7 +40,45 @@ public class DocumentService {
     private final ObjectMapper objectMapper;
 
     /**
-     * Called from POST /api/documents.
+     * Explicit constructor for dependency injection.
+     * <p>
+     * Using a concrete constructor instead of Lombok's {@code @RequiredArgsConstructor}
+     * makes it easier for IDEs to detect the bean correctly and avoids any Lombok
+     * configuration issues.
+     * </p>
+     *
+     * @param documentRepository JPA repository for {@link Document} entities
+     * @param ragDirectService   client used to call the Python RAG Agent service
+     * @param objectMapper       Jackson mapper for JSON (de)serialization
+     */
+    public DocumentService(
+            DocumentRepository documentRepository,
+            RagDirectService ragDirectService,
+            ObjectMapper objectMapper
+    ) {
+        this.documentRepository = documentRepository;
+        this.ragDirectService = ragDirectService;
+        this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Process a new document: persist it, call the RAG backend, store the
+     * analysis result, and return a mapped {@link DocumentResponse}.
+     * <p>
+     * High-level flow:
+     * </p>
+     * <ol>
+     *   <li>Create a new {@link Document} in {@link DocumentStatus#PROCESSING}</li>
+     *   <li>Invoke {@link RagDirectService#query(String, int)} with the document text</li>
+     *   <li>Build an {@link AiAnalysisResult} from the RAG response</li>
+     *   <li>On success: mark the document as {@link DocumentStatus#COMPLETED}</li>
+     *   <li>On failure: mark the document as {@link DocumentStatus#FAILED}
+     *       and store error details</li>
+     *   <li>Return a DTO with status, type, analysis and timestamps</li>
+     * </ol>
+     *
+     * @param request request DTO containing the raw document text
+     * @return fully populated {@link DocumentResponse}
      */
     @Transactional
     public DocumentResponse processDocument(DocumentRequest request) {
@@ -56,8 +104,8 @@ public class DocumentService {
             fields.put("documents", ragResponse.getDocuments());
 
             aiResult = new AiAnalysisResult(
-                    "RAG_ANSWER",          // type
-                    "rag-agent-service",   // actionType / source
+                    "RAG_ANSWER",        // type
+                    "rag-agent-service", // actionType / source
                     fields
             );
 
@@ -100,6 +148,16 @@ public class DocumentService {
         return response;
     }
 
+    /**
+     * Serialize a value into a JSON string.
+     * <p>
+     * Any {@link JsonProcessingException} is logged and results in a {@code null}
+     * return value instead of failing the whole operation.
+     * </p>
+     *
+     * @param value object to serialize
+     * @return JSON representation or {@code null} if serialization fails
+     */
     private String objectToJson(Object value) {
         try {
             return objectMapper.writeValueAsString(value);
@@ -110,7 +168,14 @@ public class DocumentService {
     }
 
     /**
-     * Called from GET /api/documents/{id}.
+     * Look up a document by id and map it to {@link DocumentResponse}.
+     * <p>
+     * If the stored {@code analysisJson} cannot be deserialized, the response
+     * is still returned but with {@code analysis = null}.
+     * </p>
+     *
+     * @param id document identifier
+     * @return an {@link Optional} containing the mapped response or empty if no document exists
      */
     public Optional<DocumentResponse> getDocument(String id) {
         return documentRepository.findById(id).map(doc -> {

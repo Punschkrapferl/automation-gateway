@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  rag-api:
+    build: ./rag-agent-service
+    container_name: rag-api
+    ports:
+      - "8000:8000"
+    # environment:
+    # Optional environment variables for your Python service
+    # - MODEL_PATH=/models/mistral.gguf
+    # - LOG_LEVEL=info
+    networks:
+      - backend
+
+  automation-gateway:
+    build: ./automation-gateway
+    container_name: automation-gateway
+    depends_on:
+      - rag-api
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      # Optional override for base URL:
+      # - AI_SERVICE_BASE_URL=http://rag-api:8000
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

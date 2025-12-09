@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: automation-gateway
+
+ai:
+  service:
+    # From inside Docker, this points to your host machine
+    base-url: http://host.docker.internal:8000

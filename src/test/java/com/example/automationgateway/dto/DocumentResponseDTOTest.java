@@ -8,11 +8,11 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class DocumentResponseTest {
+class DocumentResponseDTOTest {
 
     @Test
     void allArgsConstructorAndGettersWork() {
-        AiAnalysisResult analysis = new AiAnalysisResult(
+        AiAnalysisResultDTO analysis = new AiAnalysisResultDTO(
                 "RAG_ANSWER",
                 "rag-agent-service",
                 Map.of("answer", "42")
@@ -20,7 +20,7 @@ class DocumentResponseTest {
         Instant created = Instant.parse("2025-01-01T10:00:00Z");
         Instant updated = Instant.parse("2025-01-01T10:05:00Z");
 
-        DocumentResponse resp = new DocumentResponse(
+        DocumentResponseDTO resp = new DocumentResponseDTO(
                 "doc-1",
                 DocumentStatus.COMPLETED,
                 "RAG_ANSWER",
@@ -39,7 +39,7 @@ class DocumentResponseTest {
 
     @Test
     void noArgsConstructorAndSettersWork() {
-        AiAnalysisResult analysis = new AiAnalysisResult(
+        AiAnalysisResultDTO analysis = new AiAnalysisResultDTO(
                 "ERROR",
                 "rag-agent-service",
                 Map.of("errorType", "RuntimeException")
@@ -47,7 +47,7 @@ class DocumentResponseTest {
         Instant created = Instant.now();
         Instant updated = created.plusSeconds(5);
 
-        DocumentResponse resp = new DocumentResponse();
+        DocumentResponseDTO resp = new DocumentResponseDTO();
         resp.setId("doc-2");
         resp.setStatus(DocumentStatus.FAILED);
         resp.setType("ERROR");
@@ -65,12 +65,12 @@ class DocumentResponseTest {
 
     @Test
     void equalsAndHashCodeConsiderAllFields() {
-        AiAnalysisResult analysis1 = new AiAnalysisResult(
+        AiAnalysisResultDTO analysis1 = new AiAnalysisResultDTO(
                 "T",
                 "A",
                 Map.of("k", "v")
         );
-        AiAnalysisResult analysis2 = new AiAnalysisResult(
+        AiAnalysisResultDTO analysis2 = new AiAnalysisResultDTO(
                 "T",
                 "A",
                 Map.of("k", "v")
@@ -78,17 +78,17 @@ class DocumentResponseTest {
         Instant created = Instant.parse("2025-01-01T10:00:00Z");
         Instant updated = Instant.parse("2025-01-01T10:05:00Z");
 
-        DocumentResponse r1 = new DocumentResponse(
+        DocumentResponseDTO r1 = new DocumentResponseDTO(
                 "id-1", DocumentStatus.PROCESSING, "T", analysis1, created, updated
         );
-        DocumentResponse r2 = new DocumentResponse(
+        DocumentResponseDTO r2 = new DocumentResponseDTO(
                 "id-1", DocumentStatus.PROCESSING, "T", analysis2, created, updated
         );
 
         assertEquals(r1, r2);
         assertEquals(r1.hashCode(), r2.hashCode());
 
-        DocumentResponse r3 = new DocumentResponse(
+        DocumentResponseDTO r3 = new DocumentResponseDTO(
                 "id-2", DocumentStatus.PROCESSING, "T", analysis1, created, updated
         );
         assertNotEquals(r1, r3);
@@ -96,7 +96,7 @@ class DocumentResponseTest {
 
     @Test
     void toStringContainsKeyFields() {
-        AiAnalysisResult analysis = new AiAnalysisResult(
+        AiAnalysisResultDTO analysis = new AiAnalysisResultDTO(
                 "T",
                 "A",
                 Map.of("k", "v")
@@ -104,7 +104,7 @@ class DocumentResponseTest {
         Instant created = Instant.parse("2025-01-01T10:00:00Z");
         Instant updated = Instant.parse("2025-01-01T10:05:00Z");
 
-        DocumentResponse resp = new DocumentResponse(
+        DocumentResponseDTO resp = new DocumentResponseDTO(
                 "doc-x",
                 DocumentStatus.COMPLETED,
                 "T",

@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * Represents a single retrieved passage or document returned by the
- * Python RAG Agent service as part of {@link RagQueryResponse}.
+ * Python RAG Agent service as part of {@link RagQueryResponseDTO}.
  * <p>
  * Each instance contains:
  * </p>
@@ -43,7 +43,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RagRetrievedDocument {
+public class RagRetrievedDocumentDTO {
 
     /**
      * Unique identifier of the retrieved document or passage.

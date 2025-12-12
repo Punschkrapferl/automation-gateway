@@ -5,13 +5,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RagQueryRequestTest {
+class RagQueryRequestDTOTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void allArgsConstructorAndGettersWork() {
-        RagQueryRequest req = new RagQueryRequest("some query", 5);
+        RagQueryRequestDTO req = new RagQueryRequestDTO("some query", 5);
 
         assertEquals("some query", req.getQuery());
         assertEquals(5, req.getTopK());
@@ -19,7 +19,7 @@ class RagQueryRequestTest {
 
     @Test
     void noArgsConstructorAndSettersWork() {
-        RagQueryRequest req = new RagQueryRequest();
+        RagQueryRequestDTO req = new RagQueryRequestDTO();
         req.setQuery("hello");
         req.setTopK(3);
 
@@ -29,7 +29,7 @@ class RagQueryRequestTest {
 
     @Test
     void serializesTopKAsTopKSnakeCase() throws Exception {
-        RagQueryRequest req = new RagQueryRequest("test query", 7);
+        RagQueryRequestDTO req = new RagQueryRequestDTO("test query", 7);
 
         String json = objectMapper.writeValueAsString(req);
 
@@ -47,7 +47,7 @@ class RagQueryRequestTest {
                 }
                 """;
 
-        RagQueryRequest req = objectMapper.readValue(json, RagQueryRequest.class);
+        RagQueryRequestDTO req = objectMapper.readValue(json, RagQueryRequestDTO.class);
 
         assertEquals("another query", req.getQuery());
         assertEquals(10, req.getTopK());

@@ -34,3 +34,7 @@ ai:
   service:
     # Base URL of your local Python rag-agent-service
     base-url: http://localhost:8000
+
+n8n:
+  base-url: http://n8n:5678
+  webhook-path: /webhook/ai-action

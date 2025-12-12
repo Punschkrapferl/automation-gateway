@@ -1,9 +1,9 @@
 package com.example.automationgateway.service;
 
-import com.example.automationgateway.dto.AiAnalysisResult;
-import com.example.automationgateway.dto.DocumentRequest;
-import com.example.automationgateway.dto.DocumentResponse;
-import com.example.automationgateway.dto.RagQueryResponse;
+import com.example.automationgateway.dto.AiAnalysisResultDTO;
+import com.example.automationgateway.dto.DocumentRequestDTO;
+import com.example.automationgateway.dto.DocumentResponseDTO;
+import com.example.automationgateway.dto.RagQueryResponseDTO;
 import com.example.automationgateway.model.Document;
 import com.example.automationgateway.model.DocumentStatus;
 import com.example.automationgateway.repository.DocumentRepository;
@@ -25,6 +25,7 @@ import java.util.UUID;
  *   <li>Persisting incoming documents</li>
  *   <li>Calling the external RAG backend for analysis</li>
  *   <li>Storing the AI analysis result as JSON</li>
+ *   <li>Triggering downstream automations (n8n)</li>
  *   <li>Mapping entities to API-facing DTOs</li>
  * </ul>
  * <p>
@@ -38,50 +39,34 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final RagDirectService ragDirectService;
     private final ObjectMapper objectMapper;
+    private final N8nService n8NService;
 
     /**
      * Explicit constructor for dependency injection.
-     * <p>
-     * Using a concrete constructor instead of Lombok's {@code @RequiredArgsConstructor}
-     * makes it easier for IDEs to detect the bean correctly and avoids any Lombok
-     * configuration issues.
-     * </p>
      *
      * @param documentRepository JPA repository for {@link Document} entities
      * @param ragDirectService   client used to call the Python RAG Agent service
      * @param objectMapper       Jackson mapper for JSON (de)serialization
+     * @param n8NService          client used to send automation events to n8n
      */
     public DocumentService(
             DocumentRepository documentRepository,
             RagDirectService ragDirectService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            N8nService n8NService
     ) {
         this.documentRepository = documentRepository;
         this.ragDirectService = ragDirectService;
         this.objectMapper = objectMapper;
+        this.n8NService = n8NService;
     }
 
     /**
      * Process a new document: persist it, call the RAG backend, store the
-     * analysis result, and return a mapped {@link DocumentResponse}.
-     * <p>
-     * High-level flow:
-     * </p>
-     * <ol>
-     *   <li>Create a new {@link Document} in {@link DocumentStatus#PROCESSING}</li>
-     *   <li>Invoke {@link RagDirectService#query(String, int)} with the document text</li>
-     *   <li>Build an {@link AiAnalysisResult} from the RAG response</li>
-     *   <li>On success: mark the document as {@link DocumentStatus#COMPLETED}</li>
-     *   <li>On failure: mark the document as {@link DocumentStatus#FAILED}
-     *       and store error details</li>
-     *   <li>Return a DTO with status, type, analysis and timestamps</li>
-     * </ol>
-     *
-     * @param request request DTO containing the raw document text
-     * @return fully populated {@link DocumentResponse}
+     * analysis result, optionally trigger n8n, and return a mapped {@link DocumentResponseDTO}.
      */
     @Transactional
-    public DocumentResponse processDocument(DocumentRequest request) {
+    public DocumentResponseDTO processDocument(DocumentRequestDTO request) {
         // 1) Persist initial document in PROCESSING
         Document document = new Document();
         document.setId(UUID.randomUUID().toString());
@@ -91,21 +76,24 @@ public class DocumentService {
         document.setUpdatedAt(Instant.now());
         documentRepository.save(document);
 
-        AiAnalysisResult aiResult;
+        AiAnalysisResultDTO aiResult;
 
         try {
             // 2) Call RAG backend
-            RagQueryResponse ragResponse = ragDirectService.query(request.getText(), 5);
+            RagQueryResponseDTO ragResponse = ragDirectService.query(request.getText(), 5);
 
             // 3) Map RAG response into a generic AiAnalysisResult
             Map<String, Object> fields = new HashMap<>();
             fields.put("query", ragResponse.getQuery());
             fields.put("answer", ragResponse.getAnswer());
             fields.put("documents", ragResponse.getDocuments());
+            fields.put("source", "rag-agent-service");
 
-            aiResult = new AiAnalysisResult(
-                    "RAG_ANSWER",        // type
-                    "rag-agent-service", // actionType / source
+            // IMPORTANT: actionType now encodes the business action for n8n
+            // Example: "create_invoice_entry" or "create_support_ticket"
+            aiResult = new AiAnalysisResultDTO(
+                    "RAG_ANSWER",          // type
+                    "create_invoice_entry",// actionType (used by n8n Switch node)
                     fields
             );
 
@@ -122,9 +110,10 @@ public class DocumentService {
             errFields.put("errorType", e.getClass().getSimpleName());
             errFields.put("message", e.getMessage());
 
-            aiResult = new AiAnalysisResult(
+            // Optional: separate action type for error handling in n8n
+            aiResult = new AiAnalysisResultDTO(
                     "ERROR",
-                    "rag-agent-service",
+                    "notify_error",
                     errFields
             );
 
@@ -134,10 +123,14 @@ public class DocumentService {
             document.setUpdatedAt(Instant.now());
         }
 
+        // 5) Persist final state
         document = documentRepository.save(document);
 
-        // 5) Build response DTO
-        DocumentResponse response = new DocumentResponse();
+        // 6) Trigger n8n automation (safe: errors are logged inside N8nClient)
+        n8NService.sendAiAction(document, aiResult);
+
+        // 7) Build response DTO
+        DocumentResponseDTO response = new DocumentResponseDTO();
         response.setId(document.getId());
         response.setStatus(document.getStatus());
         response.setType(document.getType());
@@ -150,13 +143,6 @@ public class DocumentService {
 
     /**
      * Serialize a value into a JSON string.
-     * <p>
-     * Any {@link JsonProcessingException} is logged and results in a {@code null}
-     * return value instead of failing the whole operation.
-     * </p>
-     *
-     * @param value object to serialize
-     * @return JSON representation or {@code null} if serialization fails
      */
     private String objectToJson(Object value) {
         try {
@@ -168,27 +154,20 @@ public class DocumentService {
     }
 
     /**
-     * Look up a document by id and map it to {@link DocumentResponse}.
-     * <p>
-     * If the stored {@code analysisJson} cannot be deserialized, the response
-     * is still returned but with {@code analysis = null}.
-     * </p>
-     *
-     * @param id document identifier
-     * @return an {@link Optional} containing the mapped response or empty if no document exists
+     * Look up a document by id and map it to {@link DocumentResponseDTO}.
      */
-    public Optional<DocumentResponse> getDocument(String id) {
+    public Optional<DocumentResponseDTO> getDocument(String id) {
         return documentRepository.findById(id).map(doc -> {
-            AiAnalysisResult analysis = null;
+            AiAnalysisResultDTO analysis = null;
             if (doc.getAnalysisJson() != null) {
                 try {
-                    analysis = objectMapper.readValue(doc.getAnalysisJson(), AiAnalysisResult.class);
+                    analysis = objectMapper.readValue(doc.getAnalysisJson(), AiAnalysisResultDTO.class);
                 } catch (JsonProcessingException e) {
                     log.warn("Failed to deserialize analysisJson for document {}", doc.getId(), e);
                 }
             }
 
-            DocumentResponse resp = new DocumentResponse();
+            DocumentResponseDTO resp = new DocumentResponseDTO();
             resp.setId(doc.getId());
             resp.setStatus(doc.getStatus());
             resp.setType(doc.getType());

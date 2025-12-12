@@ -1,8 +1,8 @@
 package com.example.automationgateway.controller;
 
-import com.example.automationgateway.dto.AiAnalysisResult;
-import com.example.automationgateway.dto.DocumentRequest;
-import com.example.automationgateway.dto.DocumentResponse;
+import com.example.automationgateway.dto.AiAnalysisResultDTO;
+import com.example.automationgateway.dto.DocumentRequestDTO;
+import com.example.automationgateway.dto.DocumentResponseDTO;
 import com.example.automationgateway.model.DocumentStatus;
 import com.example.automationgateway.service.DocumentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,15 +51,15 @@ class DocumentControllerTest {
 
     @Test
     void createDocumentReturnsOkAndResponseBody() throws Exception {
-        DocumentRequest request = new DocumentRequest("hello AI");
+        DocumentRequestDTO request = new DocumentRequestDTO("hello AI");
 
-        AiAnalysisResult analysis = new AiAnalysisResult(
+        AiAnalysisResultDTO analysis = new AiAnalysisResultDTO(
                 "invoice",
                 "create_ticket",
                 Map.of("customer", "John Doe", "amount", 123.45)
         );
 
-        DocumentResponse response = new DocumentResponse(
+        DocumentResponseDTO response = new DocumentResponseDTO(
                 "doc-123",
                 DocumentStatus.COMPLETED,
                 "invoice",
@@ -68,7 +68,7 @@ class DocumentControllerTest {
                 Instant.parse("2025-01-01T10:05:00Z")
         );
 
-        Mockito.when(documentService.processDocument(any(DocumentRequest.class)))
+        Mockito.when(documentService.processDocument(any(DocumentRequestDTO.class)))
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/documents")
@@ -85,7 +85,7 @@ class DocumentControllerTest {
 
     @Test
     void createDocumentWithEmptyTextReturnsBadRequest() throws Exception {
-        DocumentRequest invalidRequest = new DocumentRequest(""); // violates @NotBlank
+        DocumentRequestDTO invalidRequest = new DocumentRequestDTO(""); // violates @NotBlank
 
         mockMvc.perform(post("/api/documents")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -95,13 +95,13 @@ class DocumentControllerTest {
 
     @Test
     void getDocumentFoundReturnsOk() throws Exception {
-        AiAnalysisResult analysis = new AiAnalysisResult(
+        AiAnalysisResultDTO analysis = new AiAnalysisResultDTO(
                 "email",
                 "reply",
                 Map.of("subject", "Test")
         );
 
-        DocumentResponse response = new DocumentResponse(
+        DocumentResponseDTO response = new DocumentResponseDTO(
                 "doc-456",
                 DocumentStatus.COMPLETED,
                 "email",

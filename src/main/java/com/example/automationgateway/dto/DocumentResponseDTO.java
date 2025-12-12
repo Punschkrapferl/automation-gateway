@@ -50,7 +50,7 @@ import java.time.Instant;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentResponse {
+public class DocumentResponseDTO {
 
     /**
      * Unique identifier of the stored document (UUID string).
@@ -64,14 +64,14 @@ public class DocumentResponse {
     private DocumentStatus status;
 
     /**
-     * High-level type of the result, usually matching {@link AiAnalysisResult#getType()}.
+     * High-level type of the result, usually matching {@link AiAnalysisResultDTO#getType()}.
      */
     private String type;
 
     /**
      * Analysis output produced by the RAG backend. Can be {@code null} if deserialization fails.
      */
-    private AiAnalysisResult analysis;
+    private AiAnalysisResultDTO analysis;
 
     /**
      * Timestamp when the document was created.

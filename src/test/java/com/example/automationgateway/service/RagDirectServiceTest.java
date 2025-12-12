@@ -1,8 +1,8 @@
 package com.example.automationgateway.service;
 
-import com.example.automationgateway.dto.RagQueryRequest;
-import com.example.automationgateway.dto.RagQueryResponse;
-import com.example.automationgateway.dto.RagRetrievedDocument;
+import com.example.automationgateway.dto.RagQueryRequestDTO;
+import com.example.automationgateway.dto.RagQueryResponseDTO;
+import com.example.automationgateway.dto.RagRetrievedDocumentDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -30,13 +30,13 @@ class RagDirectServiceTest {
         String baseUrl = "http://rag-api:8000";
         RagDirectService service = new RagDirectService(restTemplate, baseUrl);
 
-        RagRetrievedDocument doc = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc = new RagRetrievedDocumentDTO(
                 "d1", 0.9, "text", Map.of("k", "v")
         );
-        RagQueryResponse body = new RagQueryResponse(
+        RagQueryResponseDTO body = new RagQueryResponseDTO(
                 "question", "answer", List.of(doc)
         );
-        ResponseEntity<RagQueryResponse> responseEntity =
+        ResponseEntity<RagQueryResponseDTO> responseEntity =
                 new ResponseEntity<>(body, HttpStatus.OK);
 
         AtomicReference<String> capturedUrl = new AtomicReference<>();
@@ -45,24 +45,24 @@ class RagDirectServiceTest {
         when(restTemplate.postForEntity(
                 anyString(),
                 any(HttpEntity.class),
-                eq(RagQueryResponse.class)
+                eq(RagQueryResponseDTO.class)
         )).thenAnswer(invocation -> {
             capturedUrl.set(invocation.getArgument(0, String.class));
             capturedEntity.set(invocation.getArgument(1, HttpEntity.class));
             return responseEntity;
         });
 
-        RagQueryResponse result = service.query("question", 3);
+        RagQueryResponseDTO result = service.query("question", 3);
 
         // URL must be baseUrl + /api/query
         assertEquals("http://rag-api:8000/api/query", capturedUrl.get());
 
         // Request payload and headers
         @SuppressWarnings("unchecked")
-        HttpEntity<RagQueryRequest> sentEntity = (HttpEntity<RagQueryRequest>) capturedEntity.get();
+        HttpEntity<RagQueryRequestDTO> sentEntity = (HttpEntity<RagQueryRequestDTO>) capturedEntity.get();
         assertNotNull(sentEntity);
 
-        RagQueryRequest sentBody = sentEntity.getBody();
+        RagQueryRequestDTO sentBody = sentEntity.getBody();
         assertNotNull(sentBody);
         assertEquals("question", sentBody.getQuery());
         assertEquals(3, sentBody.getTopK());
@@ -83,8 +83,8 @@ class RagDirectServiceTest {
         String baseUrl = "http://rag-api:8000/";
         RagDirectService service = new RagDirectService(restTemplate, baseUrl);
 
-        RagQueryResponse body = new RagQueryResponse("q", "a", List.of());
-        ResponseEntity<RagQueryResponse> responseEntity =
+        RagQueryResponseDTO body = new RagQueryResponseDTO("q", "a", List.of());
+        ResponseEntity<RagQueryResponseDTO> responseEntity =
                 new ResponseEntity<>(body, HttpStatus.OK);
 
         AtomicReference<String> capturedUrl = new AtomicReference<>();
@@ -92,7 +92,7 @@ class RagDirectServiceTest {
         when(restTemplate.postForEntity(
                 anyString(),
                 any(HttpEntity.class),
-                eq(RagQueryResponse.class)
+                eq(RagQueryResponseDTO.class)
         )).thenAnswer(invocation -> {
             capturedUrl.set(invocation.getArgument(0, String.class));
             return responseEntity;
@@ -108,13 +108,13 @@ class RagDirectServiceTest {
         String baseUrl = "http://rag-api:8000";
         RagDirectService service = new RagDirectService(restTemplate, baseUrl);
 
-        ResponseEntity<RagQueryResponse> responseEntity =
+        ResponseEntity<RagQueryResponseDTO> responseEntity =
                 new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
 
         when(restTemplate.postForEntity(
                 anyString(),
                 any(HttpEntity.class),
-                eq(RagQueryResponse.class)
+                eq(RagQueryResponseDTO.class)
         )).thenReturn(responseEntity);
 
         IllegalStateException ex = assertThrows(
@@ -135,7 +135,7 @@ class RagDirectServiceTest {
         when(restTemplate.postForEntity(
                 anyString(),
                 any(HttpEntity.class),
-                eq(RagQueryResponse.class)
+                eq(RagQueryResponseDTO.class)
         )).thenThrow(cause);
 
         RestClientException ex = assertThrows(

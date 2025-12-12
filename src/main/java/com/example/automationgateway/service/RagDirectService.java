@@ -1,7 +1,7 @@
 package com.example.automationgateway.service;
 
-import com.example.automationgateway.dto.RagQueryRequest;
-import com.example.automationgateway.dto.RagQueryResponse;
+import com.example.automationgateway.dto.RagQueryRequestDTO;
+import com.example.automationgateway.dto.RagQueryResponseDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -74,37 +74,37 @@ public class RagDirectService {
      *
      * <p>Flow:</p>
      * <ol>
-     *   <li>Builds a {@link RagQueryRequest} containing {@code question} and {@code topK}</li>
+     *   <li>Builds a {@link RagQueryRequestDTO} containing {@code question} and {@code topK}</li>
      *   <li>Sets {@code Content-Type} and {@code Accept} to {@code application/json}</li>
      *   <li>Sends the request to {@code {baseUrl}/api/query}</li>
      *   <li>Logs the outgoing request and incoming response</li>
      *   <li>Throws an exception if the HTTP status is not 2xx</li>
-     *   <li>Returns the deserialized {@link RagQueryResponse} body</li>
+     *   <li>Returns the deserialized {@link RagQueryResponseDTO} body</li>
      * </ol>
      *
      * @param question natural-language query to send to the RAG service
      * @param topK     number of documents to retrieve (mapped to {@code top_k} in JSON)
-     * @return the RAG service response as {@link RagQueryResponse}
+     * @return the RAG service response as {@link RagQueryResponseDTO}
      * @throws RestClientException    if the underlying HTTP call fails
      * @throws IllegalStateException  if the RAG service returns a non-2xx HTTP status
      */
-    public RagQueryResponse query(String question, int topK) {
-        RagQueryRequest payload = new RagQueryRequest(question, topK);
+    public RagQueryResponseDTO query(String question, int topK) {
+        RagQueryRequestDTO payload = new RagQueryRequestDTO(question, topK);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
-        HttpEntity<RagQueryRequest> entity = new HttpEntity<>(payload, headers);
+        HttpEntity<RagQueryRequestDTO> entity = new HttpEntity<>(payload, headers);
 
         log.info("Sending RAG query to {} with body={}", queryUrl, payload);
 
-        ResponseEntity<RagQueryResponse> response;
+        ResponseEntity<RagQueryResponseDTO> response;
         try {
             response = restTemplate.postForEntity(
                     queryUrl,
                     entity,
-                    RagQueryResponse.class
+                    RagQueryResponseDTO.class
             );
         } catch (RestClientException e) {
             // Log and rethrow so the caller (DocumentService) can handle the error

@@ -38,7 +38,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AiAnalysisResult {
+public class AiAnalysisResultDTO {
 
     /**
      * High-level type of the analysis result, e.g. {@code "RAG_ANSWER"} or {@code "ERROR"}.

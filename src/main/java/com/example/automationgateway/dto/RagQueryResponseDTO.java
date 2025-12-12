@@ -41,7 +41,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RagQueryResponse {
+public class RagQueryResponseDTO {
 
     /**
      * The original query that was processed by the RAG service.
@@ -56,5 +56,5 @@ public class RagQueryResponse {
     /**
      * Ranked list of documents or passages retrieved to support the answer.
      */
-    private List<RagRetrievedDocument> documents;
+    private List<RagRetrievedDocumentDTO> documents;
 }

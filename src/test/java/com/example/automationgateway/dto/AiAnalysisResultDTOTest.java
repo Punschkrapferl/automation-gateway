@@ -6,13 +6,13 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AiAnalysisResultTest {
+class AiAnalysisResultDTOTest {
 
     @Test
     void allArgsConstructorAndGettersWork() {
         Map<String, Object> fields = Map.of("key", "value");
 
-        AiAnalysisResult result = new AiAnalysisResult(
+        AiAnalysisResultDTO result = new AiAnalysisResultDTO(
                 "RAG_ANSWER",
                 "rag-agent-service",
                 fields
@@ -25,7 +25,7 @@ class AiAnalysisResultTest {
 
     @Test
     void noArgsConstructorAndSettersWork() {
-        AiAnalysisResult result = new AiAnalysisResult();
+        AiAnalysisResultDTO result = new AiAnalysisResultDTO();
 
         result.setType("ERROR");
         result.setActionType("rag-agent-service");
@@ -41,19 +41,19 @@ class AiAnalysisResultTest {
         Map<String, Object> fields1 = Map.of("a", 1);
         Map<String, Object> fields2 = Map.of("a", 1);
 
-        AiAnalysisResult r1 = new AiAnalysisResult("T", "A", fields1);
-        AiAnalysisResult r2 = new AiAnalysisResult("T", "A", fields2);
+        AiAnalysisResultDTO r1 = new AiAnalysisResultDTO("T", "A", fields1);
+        AiAnalysisResultDTO r2 = new AiAnalysisResultDTO("T", "A", fields2);
 
         assertEquals(r1, r2);
         assertEquals(r1.hashCode(), r2.hashCode());
 
-        AiAnalysisResult r3 = new AiAnalysisResult("OTHER", "A", fields1);
+        AiAnalysisResultDTO r3 = new AiAnalysisResultDTO("OTHER", "A", fields1);
         assertNotEquals(r1, r3);
     }
 
     @Test
     void toStringContainsFieldValues() {
-        AiAnalysisResult result = new AiAnalysisResult(
+        AiAnalysisResultDTO result = new AiAnalysisResultDTO(
                 "RAG_ANSWER",
                 "rag-agent-service",
                 Map.of("k", "v")

@@ -16,3 +16,7 @@ ai:
   service:
     base-url: ${AI_SERVICE_BASE_URL:http://rag-api:8000}
 
+n8n:
+  base-url: ${N8N_BASE_URL:http://n8n:5678}
+  webhook-path: /webhook/ai-action
+

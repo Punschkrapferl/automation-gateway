@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RagQueryRequest {
+public class RagQueryRequestDTO {
 
     /**
      * Natural-language query sent to the RAG Agent.

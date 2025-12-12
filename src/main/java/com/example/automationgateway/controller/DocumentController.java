@@ -1,7 +1,7 @@
 package com.example.automationgateway.controller;
 
-import com.example.automationgateway.dto.DocumentRequest;
-import com.example.automationgateway.dto.DocumentResponse;
+import com.example.automationgateway.dto.DocumentRequestDTO;
+import com.example.automationgateway.dto.DocumentResponseDTO;
 import com.example.automationgateway.service.DocumentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,17 +32,17 @@ public class DocumentController {
      * <p>
      * The request body must contain the raw document text. The document is
      * persisted in the database, sent to the RAG backend for analysis, and
-     * the resulting {@link DocumentResponse} is returned.
+     * the resulting {@link DocumentResponseDTO} is returned.
      * </p>
      *
      * @param request validated request containing the document text
      * @return HTTP 200 with the processed document response
      */
     @PostMapping
-    public ResponseEntity<DocumentResponse> createDocument(
-            @Valid @RequestBody DocumentRequest request
+    public ResponseEntity<DocumentResponseDTO> createDocument(
+            @Valid @RequestBody DocumentRequestDTO request
     ) {
-        DocumentResponse response = documentService.processDocument(request);
+        DocumentResponseDTO response = documentService.processDocument(request);
         return ResponseEntity.ok(response);
     }
 
@@ -53,8 +53,8 @@ public class DocumentController {
      * @return HTTP 200 with the document if found, or HTTP 404 otherwise
      */
     @GetMapping("/{id}")
-    public ResponseEntity<DocumentResponse> getDocument(@PathVariable String id) {
-        Optional<DocumentResponse> response = documentService.getDocument(id);
+    public ResponseEntity<DocumentResponseDTO> getDocument(@PathVariable String id) {
+        Optional<DocumentResponseDTO> response = documentService.getDocument(id);
         return response.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

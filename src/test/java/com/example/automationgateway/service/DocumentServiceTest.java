@@ -1,10 +1,10 @@
 package com.example.automationgateway.service;
 
-import com.example.automationgateway.dto.AiAnalysisResult;
-import com.example.automationgateway.dto.DocumentRequest;
-import com.example.automationgateway.dto.DocumentResponse;
-import com.example.automationgateway.dto.RagQueryResponse;
-import com.example.automationgateway.dto.RagRetrievedDocument;
+import com.example.automationgateway.dto.AiAnalysisResultDTO;
+import com.example.automationgateway.dto.DocumentRequestDTO;
+import com.example.automationgateway.dto.DocumentResponseDTO;
+import com.example.automationgateway.dto.RagQueryResponseDTO;
+import com.example.automationgateway.dto.RagRetrievedDocumentDTO;
 import com.example.automationgateway.model.Document;
 import com.example.automationgateway.model.DocumentStatus;
 import com.example.automationgateway.repository.DocumentRepository;
@@ -35,6 +35,9 @@ class DocumentServiceTest {
     @Mock
     private RagDirectService ragDirectService;
 
+    @Mock
+    private N8nService n8NService;
+
     private ObjectMapper objectMapper;
 
     private DocumentService documentService;
@@ -42,18 +45,23 @@ class DocumentServiceTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        documentService = new DocumentService(documentRepository, ragDirectService, objectMapper);
-        // IMPORTANT: no stubbing here → avoids UnnecessaryStubbing for tests that only call getDocument()
+        documentService = new DocumentService(
+                documentRepository,
+                ragDirectService,
+                objectMapper,
+                n8NService
+        );
+        // No default stubbing here; each test sets up only what it needs.
     }
 
     @Test
-    void processDocumentSuccessPathSetsCompletedStatusAndRagAnswer() {
-        DocumentRequest request = new DocumentRequest("some text");
+    void processDocumentSuccessPathSetsCompletedStatusAndRagAnswerAndCallsN8n() {
+        DocumentRequestDTO request = new DocumentRequestDTO("some text");
 
-        RagRetrievedDocument retrieved = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO retrieved = new RagRetrievedDocumentDTO(
                 "doc1", 0.95, "retrieved text", Map.of("pmcid", "PMC123")
         );
-        RagQueryResponse ragResponse = new RagQueryResponse(
+        RagQueryResponseDTO ragResponse = new RagQueryResponseDTO(
                 "some text",
                 "rag answer",
                 List.of(retrieved)
@@ -61,65 +69,79 @@ class DocumentServiceTest {
 
         when(ragDirectService.query("some text", 5)).thenReturn(ragResponse);
 
-        // For this test we do need save(...) to return the same instance
+        // save(...) should return the same instance that is passed in
         when(documentRepository.save(any(Document.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        DocumentResponse response = documentService.processDocument(request);
+        DocumentResponseDTO response = documentService.processDocument(request);
 
         assertNotNull(response.getId());
         assertEquals(DocumentStatus.COMPLETED, response.getStatus());
         assertEquals("RAG_ANSWER", response.getType());
 
-        AiAnalysisResult analysis = response.getAnalysis();
+        AiAnalysisResultDTO analysis = response.getAnalysis();
         assertNotNull(analysis);
         assertEquals("RAG_ANSWER", analysis.getType());
-        assertEquals("rag-agent-service", analysis.getActionType());
+        // new actionType for success path:
+        assertEquals("create_invoice_entry", analysis.getActionType());
         assertEquals("some text", analysis.getFields().get("query"));
         assertEquals("rag answer", analysis.getFields().get("answer"));
+        assertEquals("rag-agent-service", analysis.getFields().get("source"));
 
         // Check that the stored document has correct state and analysisJson
-        ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-        verify(documentRepository, atLeastOnce()).save(captor.capture());
-        Document lastSaved = captor.getValue();
+        ArgumentCaptor<Document> docCaptor = ArgumentCaptor.forClass(Document.class);
+        verify(documentRepository, atLeastOnce()).save(docCaptor.capture());
+        Document lastSaved = docCaptor.getValue();
         assertEquals(DocumentStatus.COMPLETED, lastSaved.getStatus());
         assertEquals("RAG_ANSWER", lastSaved.getType());
         assertNotNull(lastSaved.getAnalysisJson());
         assertDoesNotThrow(() ->
-                objectMapper.readValue(lastSaved.getAnalysisJson(), AiAnalysisResult.class)
+                objectMapper.readValue(lastSaved.getAnalysisJson(), AiAnalysisResultDTO.class)
         );
+
+        // n8n must be called once with the final document + analysis
+        ArgumentCaptor<AiAnalysisResultDTO> analysisCaptor = ArgumentCaptor.forClass(AiAnalysisResultDTO.class);
+        verify(n8NService, times(1)).sendAiAction(eq(lastSaved), analysisCaptor.capture());
+        AiAnalysisResultDTO sentToN8n = analysisCaptor.getValue();
+        assertEquals("create_invoice_entry", sentToN8n.getActionType());
     }
 
     @Test
-    void processDocumentFailurePathSetsFailedStatusAndErrorType() {
-        DocumentRequest request = new DocumentRequest("some text");
+    void processDocumentFailurePathSetsFailedStatusAndErrorTypeAndCallsN8n() {
+        DocumentRequestDTO request = new DocumentRequestDTO("some text");
 
         RuntimeException cause = new RuntimeException("backend down");
         when(ragDirectService.query("some text", 5)).thenThrow(cause);
 
-        // Again, only this test needs save(...) stubbing
         when(documentRepository.save(any(Document.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        DocumentResponse response = documentService.processDocument(request);
+        DocumentResponseDTO response = documentService.processDocument(request);
 
         assertEquals(DocumentStatus.FAILED, response.getStatus());
         assertEquals("ERROR", response.getType());
 
-        AiAnalysisResult analysis = response.getAnalysis();
+        AiAnalysisResultDTO analysis = response.getAnalysis();
         assertNotNull(analysis);
         assertEquals("ERROR", analysis.getType());
-        assertEquals("rag-agent-service", analysis.getActionType());
+        // new actionType for error path:
+        assertEquals("notify_error", analysis.getActionType());
         assertEquals("RuntimeException", analysis.getFields().get("errorType"));
         assertTrue(((String) analysis.getFields().get("message"))
                 .contains("backend down"));
 
-        ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-        verify(documentRepository, atLeastOnce()).save(captor.capture());
-        Document lastSaved = captor.getValue();
+        ArgumentCaptor<Document> docCaptor = ArgumentCaptor.forClass(Document.class);
+        verify(documentRepository, atLeastOnce()).save(docCaptor.capture());
+        Document lastSaved = docCaptor.getValue();
         assertEquals(DocumentStatus.FAILED, lastSaved.getStatus());
         assertEquals("ERROR", lastSaved.getType());
         assertNotNull(lastSaved.getAnalysisJson());
+
+        // n8n must also be called in the error case
+        ArgumentCaptor<AiAnalysisResultDTO> analysisCaptor = ArgumentCaptor.forClass(AiAnalysisResultDTO.class);
+        verify(n8NService, times(1)).sendAiAction(eq(lastSaved), analysisCaptor.capture());
+        AiAnalysisResultDTO sentToN8n = analysisCaptor.getValue();
+        assertEquals("notify_error", sentToN8n.getActionType());
     }
 
     @Test
@@ -132,9 +154,9 @@ class DocumentServiceTest {
         doc.setCreatedAt(Instant.parse("2025-01-01T10:00:00Z"));
         doc.setUpdatedAt(Instant.parse("2025-01-01T10:05:00Z"));
 
-        AiAnalysisResult storedAnalysis = new AiAnalysisResult(
+        AiAnalysisResultDTO storedAnalysis = new AiAnalysisResultDTO(
                 "RAG_ANSWER",
-                "rag-agent-service",
+                "create_invoice_entry",
                 Map.of("answer", "42")
         );
         String json = objectMapper.writeValueAsString(storedAnalysis);
@@ -142,20 +164,23 @@ class DocumentServiceTest {
 
         when(documentRepository.findById("doc-1")).thenReturn(Optional.of(doc));
 
-        Optional<DocumentResponse> opt = documentService.getDocument("doc-1");
+        Optional<DocumentResponseDTO> opt = documentService.getDocument("doc-1");
 
         assertTrue(opt.isPresent());
-        DocumentResponse resp = opt.get();
+        DocumentResponseDTO resp = opt.get();
         assertEquals("doc-1", resp.getId());
         assertEquals(DocumentStatus.COMPLETED, resp.getStatus());
         assertEquals("RAG_ANSWER", resp.getType());
         assertEquals(Instant.parse("2025-01-01T10:00:00Z"), resp.getCreatedAt());
 
-        AiAnalysisResult analysis = resp.getAnalysis();
+        AiAnalysisResultDTO analysis = resp.getAnalysis();
         assertNotNull(analysis);
         assertEquals("RAG_ANSWER", analysis.getType());
-        assertEquals("rag-agent-service", analysis.getActionType());
+        assertEquals("create_invoice_entry", analysis.getActionType());
         assertEquals("42", analysis.getFields().get("answer"));
+
+        // getDocument() should not interact with n8n
+        verifyNoInteractions(n8NService);
     }
 
     @Test
@@ -167,17 +192,20 @@ class DocumentServiceTest {
         doc.setType("RAG_ANSWER");
         doc.setCreatedAt(Instant.now());
         doc.setUpdatedAt(Instant.now());
-        doc.setAnalysisJson("{not-valid-json"); // invalid
+        doc.setAnalysisJson("{not-valid-json"); // invalid JSON
 
         when(documentRepository.findById("doc-2")).thenReturn(Optional.of(doc));
 
-        Optional<DocumentResponse> opt = documentService.getDocument("doc-2");
+        Optional<DocumentResponseDTO> opt = documentService.getDocument("doc-2");
 
         assertTrue(opt.isPresent());
-        DocumentResponse resp = opt.get();
+        DocumentResponseDTO resp = opt.get();
         assertEquals("doc-2", resp.getId());
         assertEquals(DocumentStatus.COMPLETED, resp.getStatus());
         assertEquals("RAG_ANSWER", resp.getType());
         assertNull(resp.getAnalysis()); // deserialization failed → null
+
+        // still no interaction with n8n
+        verifyNoInteractions(n8NService);
     }
 }

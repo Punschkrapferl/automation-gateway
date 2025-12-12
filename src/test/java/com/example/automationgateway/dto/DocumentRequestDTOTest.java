@@ -12,7 +12,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class DocumentRequestTest {
+class DocumentRequestDTOTest {
 
     private static ValidatorFactory validatorFactory;
     private static Validator validator;
@@ -30,14 +30,14 @@ class DocumentRequestTest {
 
     @Test
     void allArgsConstructorAndGettersWork() {
-        DocumentRequest request = new DocumentRequest("some text");
+        DocumentRequestDTO request = new DocumentRequestDTO("some text");
 
         assertEquals("some text", request.getText());
     }
 
     @Test
     void noArgsConstructorAndSetterWork() {
-        DocumentRequest request = new DocumentRequest();
+        DocumentRequestDTO request = new DocumentRequestDTO();
         request.setText("hello");
 
         assertEquals("hello", request.getText());
@@ -45,33 +45,33 @@ class DocumentRequestTest {
 
     @Test
     void notBlankValidationFailsOnNull() {
-        DocumentRequest request = new DocumentRequest(null);
+        DocumentRequestDTO request = new DocumentRequestDTO(null);
 
-        Set<ConstraintViolation<DocumentRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<DocumentRequestDTO>> violations = validator.validate(request);
         assertFalse(violations.isEmpty());
     }
 
     @Test
     void notBlankValidationFailsOnEmptyString() {
-        DocumentRequest request = new DocumentRequest("");
+        DocumentRequestDTO request = new DocumentRequestDTO("");
 
-        Set<ConstraintViolation<DocumentRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<DocumentRequestDTO>> violations = validator.validate(request);
         assertFalse(violations.isEmpty());
     }
 
     @Test
     void notBlankValidationFailsOnWhitespaceOnly() {
-        DocumentRequest request = new DocumentRequest("   ");
+        DocumentRequestDTO request = new DocumentRequestDTO("   ");
 
-        Set<ConstraintViolation<DocumentRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<DocumentRequestDTO>> violations = validator.validate(request);
         assertFalse(violations.isEmpty());
     }
 
     @Test
     void notBlankValidationPassesOnNonEmptyText() {
-        DocumentRequest request = new DocumentRequest("valid");
+        DocumentRequestDTO request = new DocumentRequestDTO("valid");
 
-        Set<ConstraintViolation<DocumentRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<DocumentRequestDTO>> violations = validator.validate(request);
         assertTrue(violations.isEmpty());
     }
 }

@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentRequest {
+public class DocumentRequestDTO {
 
     /**
      * Raw text input provided by the client. This is the string that will be

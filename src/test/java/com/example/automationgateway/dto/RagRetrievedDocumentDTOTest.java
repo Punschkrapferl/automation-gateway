@@ -6,13 +6,13 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RagRetrievedDocumentTest {
+class RagRetrievedDocumentDTOTest {
 
     @Test
     void allArgsConstructorAndGettersWork() {
         Map<String, Object> meta = Map.of("source", "pmcid:PMC123", "page", 5);
 
-        RagRetrievedDocument doc = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc = new RagRetrievedDocumentDTO(
                 "doc-1",
                 0.87,
                 "some text",
@@ -27,7 +27,7 @@ class RagRetrievedDocumentTest {
 
     @Test
     void noArgsConstructorAndSettersWork() {
-        RagRetrievedDocument doc = new RagRetrievedDocument();
+        RagRetrievedDocumentDTO doc = new RagRetrievedDocumentDTO();
 
         doc.setId("doc-2");
         doc.setScore(0.92);
@@ -45,13 +45,13 @@ class RagRetrievedDocumentTest {
         Map<String, Object> meta1 = Map.of("k", "v");
         Map<String, Object> meta2 = Map.of("k", "v");
 
-        RagRetrievedDocument d1 = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO d1 = new RagRetrievedDocumentDTO(
                 "doc-x",
                 0.5,
                 "text",
                 meta1
         );
-        RagRetrievedDocument d2 = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO d2 = new RagRetrievedDocumentDTO(
                 "doc-x",
                 0.5,
                 "text",
@@ -61,7 +61,7 @@ class RagRetrievedDocumentTest {
         assertEquals(d1, d2);
         assertEquals(d1.hashCode(), d2.hashCode());
 
-        RagRetrievedDocument d3 = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO d3 = new RagRetrievedDocumentDTO(
                 "doc-y",
                 0.5,
                 "text",
@@ -72,7 +72,7 @@ class RagRetrievedDocumentTest {
 
     @Test
     void toStringContainsKeyFields() {
-        RagRetrievedDocument doc = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc = new RagRetrievedDocumentDTO(
                 "doc-z",
                 0.73,
                 "snippet",

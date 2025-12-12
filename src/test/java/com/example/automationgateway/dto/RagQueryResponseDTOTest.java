@@ -7,24 +7,24 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RagQueryResponseTest {
+class RagQueryResponseDTOTest {
 
     @Test
     void allArgsConstructorAndGettersWork() {
-        RagRetrievedDocument doc1 = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc1 = new RagRetrievedDocumentDTO(
                 "doc-1",
                 0.95,
                 "some text",
                 Map.of("k", "v")
         );
-        RagRetrievedDocument doc2 = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc2 = new RagRetrievedDocumentDTO(
                 "doc-2",
                 0.90,
                 "other text",
                 Map.of("k2", "v2")
         );
 
-        RagQueryResponse resp = new RagQueryResponse(
+        RagQueryResponseDTO resp = new RagQueryResponseDTO(
                 "query text",
                 "answer text",
                 List.of(doc1, doc2)
@@ -40,14 +40,14 @@ class RagQueryResponseTest {
 
     @Test
     void noArgsConstructorAndSettersWork() {
-        RagRetrievedDocument doc = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc = new RagRetrievedDocumentDTO(
                 "doc-1",
                 0.8,
                 "text",
                 Map.of("k", "v")
         );
 
-        RagQueryResponse resp = new RagQueryResponse();
+        RagQueryResponseDTO resp = new RagQueryResponseDTO();
         resp.setQuery("q");
         resp.setAnswer("a");
         resp.setDocuments(List.of(doc));
@@ -60,25 +60,25 @@ class RagQueryResponseTest {
 
     @Test
     void equalsAndHashCodeConsiderAllFields() {
-        RagRetrievedDocument doc1 = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc1 = new RagRetrievedDocumentDTO(
                 "doc-1",
                 0.9,
                 "t",
                 Map.of("k", "v")
         );
-        RagRetrievedDocument doc2 = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc2 = new RagRetrievedDocumentDTO(
                 "doc-1",
                 0.9,
                 "t",
                 Map.of("k", "v")
         );
 
-        RagQueryResponse r1 = new RagQueryResponse(
+        RagQueryResponseDTO r1 = new RagQueryResponseDTO(
                 "q",
                 "a",
                 List.of(doc1)
         );
-        RagQueryResponse r2 = new RagQueryResponse(
+        RagQueryResponseDTO r2 = new RagQueryResponseDTO(
                 "q",
                 "a",
                 List.of(doc2)
@@ -87,7 +87,7 @@ class RagQueryResponseTest {
         assertEquals(r1, r2);
         assertEquals(r1.hashCode(), r2.hashCode());
 
-        RagQueryResponse r3 = new RagQueryResponse(
+        RagQueryResponseDTO r3 = new RagQueryResponseDTO(
                 "q-different",
                 "a",
                 List.of(doc1)
@@ -98,14 +98,14 @@ class RagQueryResponseTest {
 
     @Test
     void toStringContainsKeyFields() {
-        RagRetrievedDocument doc = new RagRetrievedDocument(
+        RagRetrievedDocumentDTO doc = new RagRetrievedDocumentDTO(
                 "doc-x",
                 0.7,
                 "some text",
                 Map.of()
         );
 
-        RagQueryResponse resp = new RagQueryResponse(
+        RagQueryResponseDTO resp = new RagQueryResponseDTO(
                 "query-x",
                 "answer-x",
                 List.of(doc)

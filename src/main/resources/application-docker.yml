@@ -1,8 +1,18 @@
+server:
+  port: 8080
+
 spring:
-  application:
-    name: automation-gateway
+  datasource:
+    url: jdbc:h2:mem:automation;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
 
 ai:
   service:
-    # From inside Docker, this points to your host machine
-    base-url: http://host.docker.internal:8000
+    base-url: ${AI_SERVICE_BASE_URL:http://rag-api:8000}
+

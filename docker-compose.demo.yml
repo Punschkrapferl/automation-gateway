@@ -6,7 +6,7 @@ services:
       - qdrant_storage:/qdrant/storage
 
   rag-api:
-    image: punschkrapferl23/rag-agent-service-api:latest
+    image: punschkrapferl23/rag-agent-service-api:v1.0.2
     container_name: rag-api
     depends_on:
       - qdrant
@@ -16,7 +16,7 @@ services:
       - QDRANT_PORT=6333
 
   automation-gateway:
-    image: punschkrapferl23/automation-gateway:latest
+    image: punschkrapferl23/automation-gateway:1.0.2
     container_name: automation-gateway
     depends_on:
       - rag-api
@@ -28,7 +28,7 @@ services:
       - "8080:8080"
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.123.5
     ports:
       - "5678:5678"
     volumes:

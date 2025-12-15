@@ -1,0 +1,78 @@
+{
+  "name": "Create Support Ticket",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-action",
+        "responseMode": "onReceived"
+      },
+      "id": "Webhook",
+      "name": "AI Action Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.actionType}}",
+        "rules": [
+          {
+            "operation": "equal",
+            "value2": "create_support_ticket"
+          }
+        ]
+      },
+      "id": "Switch",
+      "name": "Switch ActionType",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "resource": "task",
+        "operation": "create",
+        "name": "={{$json.analysis.fields.query}}",
+        "description": "={{$json.analysis.fields.answer}}",
+        "listId": "CLICKUP_LIST_ID"
+      },
+      "id": "ClickUp",
+      "name": "Create ClickUp Ticket",
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [760, 300],
+      "credentials": {
+        "clickUpApi": {
+          "id": "CLICKUP_CREDENTIAL_ID",
+          "name": "ClickUp Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "AI Action Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch ActionType",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch ActionType": {
+      "main": [
+        [
+          {
+            "node": "Create ClickUp Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

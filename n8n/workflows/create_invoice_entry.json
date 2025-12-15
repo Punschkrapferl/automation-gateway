@@ -1,0 +1,74 @@
+{
+  "name": "Create Invoice Entry",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-action",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "Webhook",
+      "name": "AI Action Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"actionType\"]}}",
+        "rules": [
+          {
+            "operation": "equal",
+            "value2": "create_invoice_entry"
+          }
+        ]
+      },
+      "id": "Switch",
+      "name": "Switch ActionType",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "requestMethod": "POST",
+        "url": "https://example.com/invoice-api",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{$json.analysis.fields}}"
+      },
+      "id": "Invoice",
+      "name": "Create Invoice (Mock API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [760, 300]
+    }
+  ],
+  "connections": {
+    "AI Action Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch ActionType",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch ActionType": {
+      "main": [
+        [
+          {
+            "node": "Create Invoice (Mock API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

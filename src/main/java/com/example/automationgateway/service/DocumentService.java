@@ -47,7 +47,7 @@ public class DocumentService {
      * @param documentRepository JPA repository for {@link Document} entities
      * @param ragDirectService   client used to call the Python RAG Agent service
      * @param objectMapper       Jackson mapper for JSON (de)serialization
-     * @param n8NService          client used to send automation events to n8n
+     * @param n8NService         client used to send automation events to n8n
      */
     public DocumentService(
             DocumentRepository documentRepository,
@@ -89,11 +89,11 @@ public class DocumentService {
             fields.put("documents", ragResponse.getDocuments());
             fields.put("source", "rag-agent-service");
 
-            // IMPORTANT: actionType now encodes the business action for n8n
+            // IMPORTANT: actionType encodes the business action for n8n
             // Example: "create_invoice_entry" or "create_support_ticket"
             aiResult = new AiAnalysisResultDTO(
-                    "RAG_ANSWER",          // type
-                    "create_invoice_entry",// actionType (used by n8n Switch node)
+                    "RAG_ANSWER",           // type
+                    "create_invoice_entry", // actionType (used by n8n Switch node)
                     fields
             );
 
@@ -109,11 +109,16 @@ public class DocumentService {
             Map<String, Object> errFields = new HashMap<>();
             errFields.put("errorType", e.getClass().getSimpleName());
             errFields.put("message", e.getMessage());
+            // Optional extras that can be used in ClickUp if you want:
+            errFields.put("title", "Error while processing document " + document.getId());
+            errFields.put("description",
+                    "An exception occurred in the RAG pipeline:\n"
+                            + e.getClass().getSimpleName() + ": " + e.getMessage());
 
-            // Optional: separate action type for error handling in n8n
+            // Re-use the support-ticket branch in n8n for errors
             aiResult = new AiAnalysisResultDTO(
                     "ERROR",
-                    "notify_error",
+                    "create_support_ticket", // was "notify_error"
                     errFields
             );
 

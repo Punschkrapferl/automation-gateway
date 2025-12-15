@@ -1,0 +1,80 @@
+{
+  "name": "Unknown ActionType Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-action",
+        "responseMode": "onReceived"
+      },
+      "id": "Webhook",
+      "name": "AI Action Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.actionType}}",
+        "rules": [
+          {
+            "operation": "equal",
+            "value2": "create_invoice_entry"
+          },
+          {
+            "operation": "equal",
+            "value2": "create_support_ticket"
+          },
+          {
+            "operation": "equal",
+            "value2": "notify_error"
+          }
+        ]
+      },
+      "id": "Switch",
+      "name": "Known ActionTypes?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "message": "Unknown actionType received: {{$json.actionType}}\nDocument: {{$json.documentId}}",
+        "level": "warn"
+      },
+      "id": "Log",
+      "name": "Log Unknown Action",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [760, 440]
+    }
+  ],
+  "connections": {
+    "AI Action Webhook": {
+      "main": [
+        [
+          {
+            "node": "Known ActionTypes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Known ActionTypes?": {
+      "main": [
+        [],
+        [],
+        [],
+        [
+          {
+            "node": "Log Unknown Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

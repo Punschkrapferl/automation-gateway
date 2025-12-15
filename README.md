@@ -181,6 +181,7 @@ Expected behavior:
   invoice API)
 
 [Invoice_entry created from n8n](docs/screenshots/create_invoice_entry.png)
+
 2) `create_support_ticket` (ClickUp ticket flow)
 ```
 curl -X POST "http://localhost:5678/webhook/ai-action" \

@@ -18,8 +18,10 @@ The Automation Gateway image is versioned (v1.0.0) to ensure reproducible demos.
 This project runs entirely via Docker Compose using **prebuilt images**.
 No local builds required.
 
-### Start the system
+### Clone the repo and start the system
 ```bash
+git clone https://github.com/Punschkrapferl/automation-gateway.git
+cd automation-gateway
 docker-compose -f docker-compose.demo.yml pull
 docker-compose -f docker-compose.demo.yml up
 ```
